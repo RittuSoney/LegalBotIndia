@@ -1,0 +1,12 @@
+# Security
+.env
+
+# Python Caches
+__pycache__/
+*.pyc
+
+# Django Database (Optional, but best practice so you don't upload user data)
+db.sqlite3
+
+# Heavy Machine Learning Caches
+saved_law_embeddings.npy

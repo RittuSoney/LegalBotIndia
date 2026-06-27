@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LegalGPT India - AI Legal Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --surface-muted: #ecf0f1;
+            --text: #2c3e50;
+            --text-muted: #6b7c93;
+            --border: #d6dde5;
+            --primary: #2c3e50;
+            --primary-2: #34495e;
+            --accent: #3498db;
+            --success: #28a745;
+            --success-dark: #218838;
+            --warning: #f39c12;
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 22px;
+            --shadow-sm: 0 2px 8px rgba(44,62,80,0.08);
+            --shadow-md: 0 10px 30px rgba(44,62,80,0.12);
+            --shadow-lg: 0 16px 40px rgba(44,62,80,0.16);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        button, input { font: inherit; }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            background: var(--bg);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-2) 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.12);
+            transition: width 0.25s ease;
+            z-index: 5;
+        }
+
+        .sidebar.collapsed { width: 82px; }
+
+        .sidebar-header {
+            padding: 20px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+
+        .brand-copy {
+            min-width: 0;
+        }
+
+        .brand-copy h2 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .brand-copy p {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .toggle-sidebar {
+            margin-left: auto;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            background: rgba(255,255,255,0.12);
+            cursor: pointer;
+        }
+
+        .sidebar.collapsed .brand-copy,
+        .sidebar.collapsed .section-title,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .history-item span,
+        .sidebar.collapsed .side-card,
+        .sidebar.collapsed .history-header-text {
+            display: none;
+        }
+
+        .sidebar-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 0 20px;
+        }
+
+        .sidebar-section { padding: 0 12px 18px; }
+
+        .section-title {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,0.68);
+            padding: 0 12px 10px;
+        }
+
+        .nav-list, .history-list { display: flex; flex-direction: column; gap: 6px; }
+
+        .nav-item, .history-item {
+            width: 100%;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .nav-item:hover, .history-item:hover {
+            background: rgba(255,255,255,0.10);
+            transform: translateX(2px);
+        }
+
+        .nav-item.active {
+            background: rgba(52,152,219,0.22);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        }
+
+        .sidebar.collapsed .nav-item,
+        .sidebar.collapsed .history-item {
+            justify-content: center;
+            padding: 12px 10px;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px 10px;
+        }
+
+        .history-clear {
+            border: none;
+            background: rgba(255,255,255,0.10);
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .history-item small {
+            display: block;
+            opacity: 0.65;
+            font-size: 0.72rem;
+            margin-top: 2px;
+        }
+
+        .main-panel {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .page-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .page-subtitle {
+            font-size: 0.84rem;
+            opacity: 0.88;
+            margin-top: 2px;
+        }
+
+        .status-dot {
+            display: flex;
+            align-items: center;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2ecc71;
+            box-shadow: 0 0 0 6px rgba(46,204,113,0.16);
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.88); opacity: 0.7; }
+        }
+
+        .view {
+            flex: 1;
+            min-height: 0;
+            display: none;
+        }
+
+        .view.active { display: flex; }
+
+        .chat-layout {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            background: var(--bg);
+        }
+
+        .chat-box {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 24px;
+            border-radius: 18px;
+            background: rgba(52, 152, 219, 0.05);
+            border-left: 4px solid var(--accent);
+            box-shadow: var(--shadow-sm);
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+
+        .message {
+            max-width: 78%;
+            padding: 16px 18px;
+            border-radius: 18px;
+            line-height: 1.6;
+            font-size: 0.96rem;
+            box-shadow: var(--shadow-sm);
+            animation: rise 0.22s ease;
+            word-break: break-word;
+        }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #007bff 0%, #3498db 100%);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-msg {
+            align-self: flex-start;
+            background: #fff;
+            color: var(--text);
+            border: 1px solid #e4e9ef;
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing-indicator { display: flex; gap: 6px; align-items: center; }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #95a5a6;
+            animation: bounce 1.3s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        .source-box {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            font-size: 0.82rem;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            padding: 8px 10px;
+            border-radius: 999px;
+            background: #ecf4fb;
+            color: #2c3e50;
+            font-size: 0.8rem;
+            border: 1px solid #d9e8f7;
+        }
+
+        .input-area {
+            padding: 25px 30px 30px;
+            background: #fff;
+            border-top: 1px solid var(--border);
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface-muted);
+            border-radius: 999px;
+            padding: 10px 12px 10px 18px;
+            border: 1px solid transparent;
+            transition: 0.2s ease;
+        }
+
+        .input-container:focus-within {
+            background: #fff;
+            border-color: #b8d6f2;
+            box-shadow: 0 0 0 4px rgba(52,152,219,0.12);
+        }
+
+        #user-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.98rem;
+            min-width: 0;
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--success) 0%, #2ecc71 100%);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(40,167,69,0.22);
+        }
+
+        .send-btn:hover:not(:disabled) { background: linear-gradient(135deg, var(--success-dark) 0%, var(--success) 100%); }
+        .send-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .enquiry-layout {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to bottom, #f7f9fb 0%, #eef3f8 100%);
+            overflow-y: auto;
+            padding: 28px;
+        }
+
+        .hero-panel {
+            background: linear-gradient(135deg, rgba(44,62,80,0.98) 0%, rgba(52,73,94,0.98) 100%);
+            color: #fff;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .hero-panel h2 {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+        }
+
+        .hero-panel p {
+            line-height: 1.7;
+            color: rgba(255,255,255,0.86);
+            max-width: 65ch;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.10);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .stat-card strong {
+            display: block;
+            font-size: 1.15rem;
+            margin-bottom: 4px;
+        }
+
+        .section-block { margin-bottom: 26px; }
+
+        .section-block h3 {
+            font-size: 1.1rem;
+            margin-bottom: 14px;
+        }
+
+        .advocate-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .advocate-card {
+            background: #fff;
+            border: 1px solid #e1e7ee;
+            border-radius: 22px;
+            padding: 22px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .advocate-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .avatar {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: #fff;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+        }
+
+        .advocate-name {
+            font-size: 1.02rem;
+            font-weight: 700;
+        }
+
+        .advocate-role {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .advocate-card p {
+            font-size: 0.91rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        .field-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .field-tag {
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: #eef5fb;
+            border: 1px solid #dceaf7;
+            color: #2c3e50;
+            font-size: 0.79rem;
+            font-weight: 500;
+        }
+
+        .contact-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .contact-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border-radius: 999px;
+            background: #f7fafc;
+            border: 1px solid #e3eaf1;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 1180px) {
+            .chat-layout { width: 100%; }
+            .hero-panel { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 860px) {
+            .sidebar {
+                position: fixed;
+                left: -300px;
+                top: 0;
+                bottom: 0;
+                transition: left 0.25s ease;
+            }
+            .sidebar.mobile-open { left: 0; }
+            .main-panel { width: 100%; }
+            .topbar { padding: 0 16px; }
+            .chat-box, .input-area, .enquiry-layout { padding-left: 16px; padding-right: 16px; }
+            .message { max-width: 92%; }
+            .mobile-menu-btn { display: inline-flex !important; }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            background: rgba(255,255,255,0.08);
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-icon"><i class="fas fa-scale-balanced"></i></div>
+                <div class="brand-copy">
+                    <h2>LegalBot India</h2>
+                    <p>Indian Legal Assistant</p>
+                </div>
+                <button class="toggle-sidebar" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-main">
+                <div class="sidebar-section">
+                    <div class="section-title">Navigation</div>
+                    <div class="nav-list">
+                        <button class="nav-item active" id="nav-chat" onclick="switchView('chat')">
+                            <i class="fas fa-comments"></i>
+                            <span>Legal Chat</span>
+                        </button>
+                        <button class="nav-item" id="nav-enquiries" onclick="switchView('enquiries')">
+                            <i class="fas fa-user-tie"></i>
+                            <span>For Enquiries..</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="history-header">
+                        <div class="history-header-text section-title" style="padding:0; margin:0;">Chat History</div>
+                        <button class="history-clear" onclick="clearHistory()" aria-label="Clear history">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="history-list" id="history-list"></div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-panel">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <i class="fas fa-balance-scale" style="font-size: 1.5rem;"></i>
+                    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <div class="page-title" id="page-title">Indian Legal Assistant</div>
+                        <div class="page-subtitle" id="page-subtitle">Ask about Indian laws</div>
+                    </div>
+                    <span class="status-dot"></span>
+                </div>
+            </header>
+
+            <section class="view active" id="chat-view">
+                <div class="chat-layout">
+                        <div class="chat-box" id="chat-box">
+                            <div class="welcome-message">
+                                <i class="fas fa-robot" style="font-size: 2.5rem; margin-bottom: 15px; opacity: 0.7; display: block;"></i>
+                                Hello! I am your AI Legal Assistant. Ask me anything about Indian Laws.
+                            </div>
+                        </div>
+
+                        <div class="input-area">
+                            <div class="input-container">
+                                <input type="text" id="user-input" placeholder="Type your legal question..." onkeypress="handleEnter(event)">
+                                <button class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="Send message">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                </div>
+            </section>
+
+            <section class="view" id="enquiries-view">
+                <div class="enquiry-layout">
+                    <div class="hero-panel">
+                        <div>
+                            <h2>For further enquiries contact....</h2>
+                            <p>Browse advocate profiles below for follow-up legal assistance.</p>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="stat-card">
+                                <strong>6</strong>
+                                <span>Advocate profiles</span>
+                            </div>
+                            <div class="stat-card">
+                                <strong>8</strong>
+                                <span>Practice areas listed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-block">
+                        <h3>Advocate Profiles</h3>
+                        <div class="advocate-grid">
+                            <article class="advocate-card">
+                                <div class="advocate-header">
+                                    <div class="avatar">A1</div>
+                                    <div>
+                                        <div class="advocate-name">Advocate 1</div>
+                                        <div class="advocate-role">Senior constitutional and civil practice</div>
+                                    </div>
+                                </div>
+                                <p>Handles constitutional interpretation, write remedies and civil disputes, and is suited for matters involving rights, governance issues and civil procedures.</p>
+                                <div class="field-list">
+                                    <span class="field-tag">Constitutional Law</span>
+                                    <span class="field-tag">Civil laws</span>
+                                </div>
+                                <div class="contact-row">
+                                    <span class="contact-pill"><i class="fas fa-phone"></i> +91 90000 00001</span>
+                                    <span class="contact-pill"><i class="fas fa-envelope"></i> advocate1@email.com</span>
+                                </div>
+                            </article>
+
+                            <article class="advocate-card">
+                                <div class="advocate-header">
+                                    <div class="avatar">A2</div>
+                                    <div>
+                                        <div class="advocate-name">Advocate 2</div>
+                                        <div class="advocate-role">Criminal litigation specialist</div>
+                                    </div>
+                                </div>
+                                <p>Focuses on criminal proceedings, police complaints, bail and trial support, helping clients understand offences, defences and procedural safeguards.</p>
+                                <div class="field-list">
+                                    <span class="field-tag">Criminal laws</span>
+                                    <span class="field-tag">Cyber and Consumer laws</span>
+                                </div>
+                                <div class="contact-row">
+                                    <span class="contact-pill"><i class="fas fa-phone"></i> +91 90000 00002</span>
+                                    <span class="contact-pill"><i class="fas fa-envelope"></i> advocate2@email.com</span>
+                                </div>
+                            </article>
+
+                            <article class="advocate-card">
+                                <div class="advocate-header">
+                                    <div class="avatar">A3</div>
+                                    <div>
+                                        <div class="advocate-name">Advocate 3</div>
+                                        <div class="advocate-role">Commercial and contract advisory</div>
+                                    </div>
+                                </div>
+                                <p>Advises on agreements, business obligations, partnership disputes and commercial recoveries, with emphasis on drafting and contract interpretation.</p>
+                                <div class="field-list">
+                                    <span class="field-tag">Contract and Commercial laws</span>
+                                    <span class="field-tag">Civil laws</span>
+                                </div>
+                                <div class="contact-row">
+                                    <span class="contact-pill"><i class="fas fa-phone"></i> +91 90000 00003</span>
+                                    <span class="contact-pill"><i class="fas fa-envelope"></i> advocate3@email.com</span>
+                                </div>
+                            </article>
+
+                            <article class="advocate-card">
+                                <div class="advocate-header">
+                                    <div class="avatar">A4</div>
+                                    <div>
+                                        <div class="advocate-name">Advocate 4</div>
+                                        <div class="advocate-role">Family and labour matters</div>
+                                    </div>
+                                </div>
+                                <p>Supports clients in family disputes, maintenance and related proceedings, while also handling employment disputes and workplace rights matters.</p>
+                                <div class="field-list">
+                                    <span class="field-tag">Family laws</span>
+                                    <span class="field-tag">Labour law</span>
+                                </div>
+                                <div class="contact-row">
+                                    <span class="contact-pill"><i class="fas fa-phone"></i> +91 90000 00004</span>
+                                    <span class="contact-pill"><i class="fas fa-envelope"></i> advocate4@email.com</span>
+                                </div>
+                            </article>
+
+                            <article class="advocate-card">
+                                <div class="advocate-header">
+                                    <div class="avatar">A5</div>
+                                    <div>
+                                        <div class="advocate-name">Advocate 5</div>
+                                        <div class="advocate-role">Consumer and cyber rights advisor</div>
+                                    </div>
+                                </div>
+                                <p>Works on online fraud complaints, digital evidence issues, e-commerce disputes and consumer claims, making this profile suitable for modern technology-driven grievances.</p>
+                                <div class="field-list">
+                                    <span class="field-tag">Cyber and Consumer laws</span>
+                                    <span class="field-tag">Contract and Commercial laws</span>
+                                </div>
+                                <div class="contact-row">
+                                    <span class="contact-pill"><i class="fas fa-phone"></i> +91 90000 00005</span>
+                                    <span class="contact-pill"><i class="fas fa-envelope"></i> advocate5@email.com</span>
+                                </div>
+                            </article>
+
+                            <article class="advocate-card">
+                                <div class="advocate-header">
+                                    <div class="avatar">A6</div>
+                                    <div>
+                                        <div class="advocate-name">Advocate 6</div>
+                                        <div class="advocate-role">Mixed practice for public and private disputes</div>
+                                    </div>
+                                </div>
+                                <p>Offers broad support across constitutional, civil and labour-linked matters, ideal for users who need preliminary direction before proceeding with detailed consultation.</p>
+                                <div class="field-list">
+                                    <span class="field-tag">Constitutional Law</span>
+                                    <span class="field-tag">Labour law</span>
+                                    <span class="field-tag">Civil laws</span>
+                                </div>
+                                <div class="contact-row">
+                                    <span class="contact-pill"><i class="fas fa-phone"></i> +91 90000 00006</span>
+                                    <span class="contact-pill"><i class="fas fa-envelope"></i> advocate6@email.com</span>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <footer>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;background-color: #34495e; color: rgba(255,255,255,0.68) ; font-size: 11px;padding-top: 1rem; padding-bottom: 1rem;">Disclaimer: This AI assistant is for preliminary legal exploration and educational purposes. It does not provide official legal advice. Do not use this tool as a substitute for professional counsel.</div>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        const chatHistory = [];
+        let currentView = 'chat';
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('chat-view').classList.toggle('active', view === 'chat');
+            document.getElementById('enquiries-view').classList.toggle('active', view === 'enquiries');
+            document.getElementById('nav-chat').classList.toggle('active', view === 'chat');
+            document.getElementById('nav-enquiries').classList.toggle('active', view === 'enquiries');
+
+            if (view === 'chat') {
+                document.getElementById('page-title').textContent = 'Indian Legal Assistant';
+                document.getElementById('page-subtitle').textContent = 'Ask about Indian laws, sections, rights and remedies';
+            } else {
+                document.getElementById('page-title').textContent = 'For further enquiries contact....';
+                document.getElementById('page-subtitle').textContent = 'Browse advocate profiles by practice area';
+            }
+
+            document.getElementById('sidebar').classList.remove('mobile-open');
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+
+            if (chatHistory.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'history-item';
+                empty.style.opacity = '0.75';
+                empty.innerHTML = '<i class="fas fa-clock-rotate-left"></i><span>No prompts yet</span>';
+                list.appendChild(empty);
+                return;
+            }
+
+            chatHistory.slice(0, 10).forEach((item) => {
+                const btn = document.createElement('button');
+                btn.className = 'history-item';
+                btn.innerHTML = `<i class="fas fa-comment-dots"></i><span>${item.query.length > 34 ? item.query.slice(0, 34) + '...' : item.query}<small>${item.time}</small></span>`;
+                btn.onclick = () => quickQuery(item.query);
+                list.appendChild(btn);
+            });
+        }
+
+        function addToHistory(query) {
+            chatHistory.unshift({ query, time: formatTime(new Date()) });
+            if (chatHistory.length > 25) chatHistory.pop();
+            renderHistory();
+        }
+
+        function clearHistory() {
+            chatHistory.length = 0;
+            renderHistory();
+        }
+
+        function quickQuery(query) {
+            switchView('chat');
+            const input = document.getElementById('user-input');
+            input.value = query;
+            input.focus();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const sendBtn = document.getElementById('send-btn');
+            const query = input.value.trim();
+
+            if (!query) return;
+
+            addToHistory(query);
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user-msg';
+            userMsg.textContent = query;
+            chatBox.appendChild(userMsg);
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const typingMsg = document.createElement('div');
+            typingMsg.className = 'message bot-msg';
+            typingMsg.id = 'typing-indicator';
+            typingMsg.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+            chatBox.appendChild(typingMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('/api/ask/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+                typingMsg.remove();
+
+                let botHtml = `<div class="message bot-msg">${(data.response || 'No response received.').replace(/\n/g, '<br>')}`;
+                if (data.sources && data.sources.length > 0) {
+                    botHtml += '<div class="source-box"><strong>Sources:</strong><br>';
+                    data.sources.forEach(s => {
+                        botHtml += `• ${s.act || 'Act'} (${s.section || 'Section'})<br>`;
+                    });
+                    botHtml += '</div>';
+                }
+                botHtml += '</div>';
+                chatBox.insertAdjacentHTML('beforeend', botHtml);
+            } catch (error) {
+                typingMsg.remove();
+                chatBox.insertAdjacentHTML('beforeend', '<div class="message bot-msg" style="color:#c0392b;background:#fff5f5;border-color:#f1c7c7;">Error connecting to server.</div>');
+            }
+
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        renderHistory();
+    </script>
+</body>
+</html>
