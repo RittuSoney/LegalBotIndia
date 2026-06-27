@@ -30,10 +30,8 @@ By mapping over 34,000 Indian statutory records (including the transition from l
 ### Live Demo
 > *Watch LegalBot India translate natural language into verified legal statutes.*
 
-[**🎥 Click here to watch the Live Demo Video!**](https://github.com/RittuSoney/LegalBotIndia/blob/main/assets/Video%20Project%201.mp4)
+https://github.com/user-attachments/assets/e7f43183-f589-4960-8f5e-746dba2ace34
 
-<video src="https://github.com/RittuSoney/LegalBotIndia/raw/main/assets/Video%20Project%201.mp4" controls="controls" style="max-width: 100%;">
-</video>
 
 ### 1. The Chat Interface
 > *Translating natural language problems into specific, verified Indian statutes.*
